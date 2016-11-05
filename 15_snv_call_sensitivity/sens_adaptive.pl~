@@ -1,0 +1,261 @@
+#!/usr/bin/perl
+
+use warnings;
+use strict;
+
+my $sample = $ARGV[0];
+my $file = $ARGV[1];
+my $exp = $ARGV[2];
+my $out1 = $ARGV[3];
+my $out2 = $AGRV[4];
+my $out3 = $AGRV[5];
+my $truth = $AGRV[6];
+
+#my $sample = "1";
+#my $file = "/isilon/Analysis/onco/v1_analyses/20160520_A162_multiplex_test1_subsample_rpbus500/1_subsample_8plex/analysis/1/snv-new2/1.adaptive.filtered.bed";
+#my $exp = "/isilon/Analysis/onco/cappmed_analyses/20160520_B106_multiplex_variant_detection_A106/0_merged_whitelist/new_expect_AF.txt";
+#my $out1 = "/isilon/Analysis/onco/v1_analyses/20160520_A162_multiplex_test1_subsample_rpbus500/1_subsample_8plex/analysis/1/snv-new2/1.summary_adaptive_truth_call.txt";
+#my $out2 = "/isilon/Analysis/onco/v1_analyses/20160520_A162_multiplex_test1_subsample_rpbus500/1_subsample_8plex/analysis/1/snv-new2/1.report_adaptive_sensitivity.txt";
+#my $out3 = "/isilon/Analysis/onco/v1_analyses/20160520_A162_multiplex_test1_subsample_rpbus500/1_subsample_8plex/analysis/1/snv-new2/1.summary_adaptive_fp.txt";
+#my $truth = "/isilon/Analysis/onco/cappmed_analyses/20160520_B106_multiplex_variant_detection_A106/0_merged_whitelist/new_truth.bed";
+
+my %true;
+my $k = 0;
+open(IN, $exp) || die "Cannot open IN: $!";
+while( my $record=<IN> )
+{
+    $k++;
+    if ($k ==1)
+    {
+	next;
+    }
+    else
+    {
+	chomp $record;
+        $record =~ s/\r|\n//g;
+        my @line = split("\t", $record);
+
+        my $id = "$line[0]--$line[1]";
+	my $af = $line[2];
+	$true{$id} = $af;
+    }
+}
+close IN;
+
+open(IN5, $file) || die "Cannot open IN: $!";
+open(OUT1, ">$out1") || die "Cannot open OUT: $!";
+print OUT1 "CHR\tPOS\tREF\tALT\tGENE\tEAF\tDEPTH\tRAF\tCALL\n";
+open(OUT3, ">$out3") || die "Cannot open OUT: $!";
+print OUT3 "CHR\tPOS\tREF\tALT\tGENE\tEAF\tDEPTH\tRAF\tCALL\n";
+
+my %tp;
+while( my $record=<IN5> )
+{
+    chomp $record;
+    $record =~ s/\r|\n//g;
+    my @line = split("\t", $record);
+    
+    my $chr = $line[0];
+    my $pos = $line[2];
+    my $ref = $line[3];
+    my $alt = $line[4];
+    my $dep = $line[5];
+    my $raf = $line[6];
+    my $gene = $line[7];
+    
+    my $id = "$chr--$pos";
+    if (exists $true{$id})
+    {
+	$tp{$id} = 1;	    
+	my $eaf = $true{$id};
+	my $call = "TRUE";
+	print OUT1 "$chr\t$pos\t$ref\t$alt\t$gene\t$eaf\t$dep\t$raf\t$call\n";
+    }
+    else
+    {
+	my $eaf = "NA";
+	my $call = "NA";
+	if ($gene eq "TP53")
+	{
+	    next;
+	}
+	else
+	{
+	    print OUT3 "$chr\t$pos\t$ref\t$alt\t$gene\t$eaf\t$dep\t$raf\t$call\n";
+	}
+    }
+}
+close IN5;
+close OUT3;
+
+
+open(IN6, $truth) || die "Cannot open IN: $!";
+while( my $record=<IN6> )
+{
+    chomp $record;
+    $record =~ s/\r|\n//g;
+    my @line = split("\t", $record);
+    
+    my $chr = $line[0];
+    my $pos = $line[1];
+    my $ref = $line[2];
+    my $alt = $line[3];
+    my $dep = "NA";
+    my $raf = "NA";
+    my $eaf = $line[21];
+    my $gene = $line[4];
+    my $id = "$chr--$pos";
+
+    if (exists $tp{$id})
+    {
+	next;
+    }
+    else
+    {
+	my $call = "FALSE";
+	print OUT1 "$chr\t$pos\t$ref\t$alt\t$gene\t$eaf\t$dep\t$raf\t$call\n";
+    }
+}
+close IN6;
+close OUT1;
+	
+
+my $g;
+my $t;
+my $g1all;
+my $g1true;
+my $g2all;
+my $g2true;
+my $g3all;
+my $g3true;
+my $g4all;
+my $g4true;
+my $g5all;
+my $g5true;
+
+
+open(IN1, $out1) || die "Cannot open IN: $!";
+open(OUT, ">$out2") || die "Cannot open OUT: $!";
+print OUT "Sample\tOverall\tAF=0.05%\tAF=0.25%\tAF=2.5%\t2.5%<AF<=6%\t40%<=AF<=60%\twhite_FP\tmax_FP_%AF\n";
+
+my $n = 0;
+while( my $record=<IN1> )
+{
+    $n++;
+    if ($n ==1)
+    {
+	next;
+    }
+    else
+    {
+	$g++;
+	chomp $record;
+	$record =~ s/\r|\n//g;
+	my @line = split("\t", $record);
+	
+	my $af = $line[5];
+	my $flag = $line[8];
+	if ($flag eq "TRUE")
+	{
+	    $t++;
+	}
+	
+	if ($af eq "NA")
+	{
+	    $af = 0;
+	}
+	
+	if ($af == 0.0005)
+	{
+	    $g1all++;
+	    if ($flag eq "TRUE")
+	    {
+		$g1true++;
+	    }
+	}
+
+	elsif ($af == 0.0025)
+	{
+	    $g2all++;
+	    if ($flag eq "TRUE")
+	    {
+		$g2true++;
+	    }
+	}
+	
+	elsif ($af == 0.025)
+	{
+	    $g3all++;
+	    if ($flag eq "TRUE")
+	    {
+		$g3true++;
+	    }
+	}
+	
+	elsif ($af > 0.025 and $af <= 0.06)
+	{
+	    $g4all++;
+	    if ($flag eq "TRUE")
+	    {
+		$g4true++;
+	    }
+	}
+	elsif ($af >= 0.4 and $af <= 0.6)
+        {
+            $g5all++;
+            if ($flag eq "TRUE")
+            {
+                $g5true++;
+	    }
+        }
+    }
+}
+close IN1;
+
+my $s1 = sprintf("%.3f", $g1true/$g1all*100);
+my $s2 = sprintf("%.3f", $g2true/$g2all*100);
+my $s3 = sprintf("%.3f", $g3true/$g3all*100);
+my $s4 = sprintf("%.3f", $g4true/$g4all*100);
+my $s5 = sprintf("%.3f", $g5true/$g5all*100);
+my $s6 = sprintf("%.3f", $t/$g*100);
+
+open(IN2, $out3) || die "Cannot open IN: $!";
+
+my $m = 0;
+my $fp = 0;
+my $max = 0;
+while( my $record=<IN2> )
+{
+    $m++;
+    if ($m ==1)
+    {
+        next;
+    }
+    else
+    {
+        chomp $record;
+        $record =~ s/\r|\n//g;
+        my @line = split("\t", $record);
+	my $ref = $line[2];
+	my $alt = $line[3];
+	my $af = $line[7];
+	my $len1 = length $ref;
+	my $len2 = length $alt;
+	
+	if ($len1==1 and $len2==1)
+	{
+	    $fp++;
+	    
+	    if ($af >$max)
+	    {
+		$max = $af;
+	    }
+	}
+    }
+}
+close IN2;
+
+my $maf=sprintf("%.5f", $max*100);
+print OUT "$sample\t$s6\t$s1\t$s2\t$s3\t$s4\t$s5\t$fp\t$maf\n";
+print "$sample\t$s6\t$s1\t$s2\t$s3\t$s4\t$s5\t$fp\t$maf\n";
+close OUT;

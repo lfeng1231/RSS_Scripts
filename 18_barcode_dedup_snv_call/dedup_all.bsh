@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+home=/isilon/Analysis/onco/v1_analyses/hardlock_lane_test/final/cfDNAspike-new-dedup-analysis
+dir=/isilon/Analysis/onco/v1_analyses/hardlock_lane_test/final
+
+for sample in "134710-2" "134714-2" "134717-2" "134722-2" "134724-2" "134730-2" "134734-2" "134735-2"
+do
+    subdir="$home/$sample"
+    mkdir -p $subdir
+    ln -s "$dir/$sample/${sample}.sorted.bam" $subdir
+    cd $subdir
+    /isilon/Analysis/onco/prog/bin/dedup_freqgen.bsh "$subdir/${sample}.sorted.bam" /isilon/Analysis/onco/indexes/hg38/RUO_P2B_capture_targets.add500bp.bed 96 &
+done

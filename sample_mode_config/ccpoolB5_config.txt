@@ -1,0 +1,44 @@
+trace {
+    enabled = true
+    file = 'ccpoolB5_pipeline_trace.txt'
+    fields = 'task_id,name,container,status,exit,start,realtime,%cpu,rss'
+}
+params.demuxed = "/isilon/Analysis/onco/v1_analyses/20160824_A198_Cindy_RUO_reagent_study/ccpoolB/analysis/demux/subsample_40M/*_AGCAAGCA.fastq"
+params.sample2barcode = "ccpoolB5_s2b.txt"
+params.sampleName = "ccpoolB5"
+params.runFastqc = false
+params.runCheckpoints = false
+params.runDemuxOnly = false
+params.fusionmode = false
+params.cnamode = false
+params.snvmode = true
+params.indelmode = true
+params.trim = 100
+params.barcodeLength = 8
+params.maxreadlength = 96
+params.igpunct = 1
+params.inputdir = "/isilon/Analysis/onco/indexes/hg38"
+params.bed = params.inputdir + "/RUO_P2A_capture_targets.bed"
+params.bedext = params.inputdir + "/RUO_P2A_capture_targets.add500bp.bed"
+params.whitelist = params.inputdir + "/whitelist_P2.txt"
+params.bgsnv = params.inputdir + "/P2B_snvbg.txt"
+params.bgindel = params.inputdir + "/P2B_indelbg_20160519.txt"
+
+params.inputdir0 = "/isilon/Analysis/onco/indexes/nextflow"
+params.phixfa = params.inputdir0 + "/phix_NC_001422.1.fa"
+params.v21bcs = params.inputdir0 + "/v2.1_bcs.txt"
+params.reference = params.inputdir0 + "/hg38.fa"
+
+params.ref2bit = params.inputdir + "/hg38.2bit"
+params.refbedLC = params.inputdir + "/hg38_masked.bed"
+params.snpDb = params.inputdir + "/CommonSNPs144.20160209.txt"
+params.exons = params.inputdir + "/RefSeq_Gencodev23_20160623.allexons.bed"
+params.blacklist = params.inputdir + "/blacklist1_NSCLC_clinical_selector.txt"
+params.blacklistV1 = params.inputdir + "/6gene_blacklist.bed"
+params.exonFile = params.inputdir + "/RefSeq_Gencodev23_20160623.allexons.sorted.bed"
+params.cnvNormals = params.inputdir + "/cnv_normal_nz.rds"
+params.testRegions = params.inputdir + "/cnvRegions.txt"
+
+params.finalDir = "analysis"
+params.mem = 5000 
+

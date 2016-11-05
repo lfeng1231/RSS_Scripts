@@ -1,0 +1,13 @@
+#!/bin/bash
+
+
+for f in LOD*.bg-polished.freq
+do
+	#echo $f
+	outfile=`basename $f`
+	outfile=${outfile%%.dualindex-deduped.sorted.bam.snv.bg-polished.freq}
+	freq_to_bed.r $f $outfile 'DEPTH > 2500'
+
+	# Still need to restrict this to on-target because the truth set is
+	bedtools intersect -a "$outfile".bed -b /isilon/Analysis/onco/indexes/hg38/RUO_P2B_capture_targets.bed > $outfile"_ontarg.gt.2500.bed"
+done

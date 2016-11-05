@@ -1,0 +1,1 @@
+nextflow run /isilon/Analysis/onco/prog/ctDNA_nextflow_v1.0.3.5-c67ffa7/nextflow/cm.nf -c ccpoolB5_config.txt > log/ccpoolB1.log &
